@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>MathQuest — Math Challenge Game</title>
+<style>
+:root{--bg:#0f172a;--panel:#1e293b;--panel2:#111c31;--line:#334155;--text:#f8fafc;--muted:#a7b4c7;--blue:#818cf8;--green:#34d399;--gold:#fbbf24;--red:#fb7185}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#26345b 0,#0f172a 48%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+header{position:sticky;top:0;z-index:5;background:#111827ed;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
+.head{max-width:960px;margin:auto;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:900;font-size:1.25rem;color:var(--blue)}.head-actions{display:flex;gap:8px}
+main{max-width:900px;margin:auto;padding:28px 18px 50px}.view{display:none}.view.active{display:block}
+.intro{text-align:center;margin:10px 0 25px}.intro h1{font-size:clamp(2rem,6vw,3rem);margin:0 0 8px}.intro p,.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.card,.panel{background:#1e293bf2;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 12px 30px #0002}
+.level-card{display:flex;flex-direction:column;gap:10px}.level-card h3{margin:0;font-size:1.15rem}.level-card p{margin:0;color:var(--muted);font-size:.9rem}.level-card button{margin-top:auto}
+button{border:0;border-radius:11px;padding:11px 15px;background:#4f46e5;color:white;font-weight:750;cursor:pointer;font-size:.92rem;transition:filter .15s,transform .15s}
+button:hover{filter:brightness(1.12)}button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{background:#334155}button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}button.gold{background:#b45309}button.small{padding:8px 11px;font-size:.82rem}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:15px}.stats{display:flex;gap:18px;color:var(--muted);font-size:.88rem}.stats strong{color:white}
+.progress{height:8px;background:#0b1220;border-radius:9px;overflow:hidden;margin:10px 0 18px}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#818cf8,#34d399);transition:width .25s}
+.tags{display:flex;gap:8px;flex-wrap:wrap}.tag{font-size:.75rem;font-weight:800;border-radius:99px;padding:5px 10px;background:#312e81;color:#c7d2fe}.tag.type{background:#4c1d95;color:#e9d5ff}
+.question{font-size:clamp(1.15rem,3.6vw,1.5rem);line-height:1.5;margin:18px 0}
+.options{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.option{background:#263449;border:1px solid #475569;text-align:left;color:var(--text);min-height:54px}.option.correct{background:#064e3b;border-color:#34d399}.option.wrong{background:#7f1d1d;border-color:#fb7185}
+.feedback{min-height:28px;margin:14px 0;color:var(--muted);font-weight:650}.feedback.good{color:var(--green)}.feedback.bad{color:#fda4af}
+.footer-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:15px;margin-top:12px}
+.result{text-align:center;max-width:520px;margin:25px auto}.big{font-size:3.5rem}.result h2{margin:5px 0}.result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:#020617d9;z-index:20;display:none;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}.modalbox{width:min(100%,520px);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}.modalbox h3{margin-top:0}.modalbox textarea,.modalbox input{width:100%;background:var(--panel2);color:white;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit}.modalbox textarea{min-height:180px;resize:vertical}
+.shareline{display:flex;gap:8px}.shareline input{min-width:0;flex:1}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+#qr{display:flex;justify-content:center;margin:14px auto;background:white;padding:10px;width:max-content;max-width:100%;border-radius:10px}#qr canvas,#qr img{max-width:100%}
+.note{font-size:.82rem;color:var(--muted);line-height:1.5}footer{text-align:center;color:#8291a8;font-size:.78rem;padding:20px}
+@media(max-width:520px){.head{padding:11px 13px}.head-actions button{padding:8px 10px}.stats{gap:10px}.panel{padding:17px}main{padding:20px 13px 40px}}
+</style>
+</head>
+<body>
+<header><div class="head"><div class="brand">📐 MathQuest</div><div class="head-actions"><button class="secondary small" id="shareBtn">↗ Share</button><button class="secondary small" id="soundBtn" aria-label="Toggle sound">🔊 Sound on</button></div></div></header>
+<main>
+<section id="menu" class="view active">
+  <div class="intro"><h1>Choose your challenge</h1><p>Complete 6 questions in each level. Score at least 5 out of 6 (about 70%) to unlock the next level.</p></div>
+  <div class="grid" id="levelGrid"></div>
+  <p class="note" style="text-align:center;margin-top:20px">Topics: Algebraic • Geometric • Trigonometric | Routine • Non-routine</p>
+</section>
+<section id="game" class="view">
+  <div class="topbar"><div><button class="ghost small" id="exitBtn">← Levels</button><div style="font-weight:850;font-size:1.2rem;margin-top:7px" id="levelTitle">Level 1</div></div><div class="stats"><span>Question <strong id="qProgress">1/6</strong></span><span>Score <strong id="score">0</strong></span></div></div>
+  <div class="progress"><span id="progressBar"></span></div>
+  <article class="panel">
+    <div class="tags"><span class="tag" id="topicTag">Algebraic</span><span class="tag type" id="typeTag">Routine</span></div>
+    <div class="question" id="questionText"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <div class="footer-actions"><button class="gold small" id="hintBtn">💡 Get a hint</button><button class="secondary small" id="scratchBtn">✎ Scratchpad</button><button id="nextBtn" disabled>Next →</button></div>
+  </article>
+</section>
+<section id="result" class="view">
+  <div class="panel result"><div class="big" id="resultIcon">🏆</div><h2 id="resultTitle">Level complete!</h2><p class="muted" id="resultMessage"></p><div style="display:flex;justify-content:space-around;background:#111827;padding:16px;border-radius:12px;margin:20px 0"><div>Correct answers<br><strong id="finalScore">0/6</strong></div><div>Stars<br><strong id="stars">☆☆☆</strong></div></div><div class="result-actions"><button class="secondary" id="menuBtn">Level menu</button><button id="nextLevelBtn">Next level →</button></div></div>
+</section>
+</main>
+<footer>MathQuest • Learn, think, and enjoy mathematics</footer>
+
+<div class="modal" id="hintModal" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><div class="modalbox"><h3 id="hintTitle">💡 Helpful hint</h3><p id="hintText"></p><div class="modal-actions"><button id="closeHint" class="secondary">Close</button></div></div></div>
+<div class="modal" id="scratchModal" role="dialog" aria-modal="true" aria-labelledby="scratchTitle"><div class="modalbox"><h3 id="scratchTitle">✎ Scratchpad</h3><textarea id="scratchText" placeholder="Work out your ideas here. This space is just for you."></textarea><div class="modal-actions"><button class="secondary" id="clearScratch">Clear</button><button id="closeScratch">Done</button></div></div></div>
+<div class="modal" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modalbox"><h3 id="shareTitle">Share MathQuest</h3><p class="note">Share this page's address. After you publish the HTML file online, this becomes a link other people can open.</p><div id="qr"></div><div class="shareline"><input id="shareUrl" readonly aria-label="Game link"><button id="copyBtn">Copy</button></div><div class="modal-actions"><button class="secondary" id="closeShare">Close</button></div></div></div>
+<script>
+"use strict";
+const levels = [
+[
+{topic:"Algebraic",type:"Routine",q:"Solve: 3x + 5 = 20.",opts:["x = 3","x = 5","x = 7","x = 15"],a:1,h:"Subtract 5 from both sides, then divide by 3.",why:"3x = 15, so x = 5."},
+{topic:"Geometric",type:"Routine",q:"A rectangle is 8 cm long and 3 cm wide. What is its area?",opts:["11 cm²","22 cm²","24 cm²","48 cm²"],a:2,h:"Area of a rectangle = length × width.",why:"8 × 3 = 24 cm²."},
+{topic:"Trigonometric",type:"Routine",q:"In a right triangle, opposite = 3 and hypotenuse = 5. What is sin θ?",opts:["3/5","4/5","5/3","3/4"],a:0,h:"Sine = opposite ÷ hypotenuse.",why:"sin θ = 3/5."},
+{topic:"Algebraic",type:"Non-routine",q:"Two consecutive whole numbers have a sum of 41. What are they?",opts:["19 and 22","20 and 21","18 and 23","21 and 22"],a:1,h:"Let the smaller number be n. The next is n + 1.",why:"n + (n + 1) = 41, so n = 20."},
+{topic:"Geometric",type:"Non-routine",q:"A square has a perimeter of 36 cm. A rectangle has the same perimeter and a length of 11 cm. What is the rectangle's width?",opts:["5 cm","7 cm","9 cm","11 cm"],a:0,h:"The rectangle's length + width is half its perimeter.",why:"18 − 11 = 7 cm. Correct answer: 7 cm.",fix:1},
+{topic:"Trigonometric",type:"Non-routine",q:"A ramp is 5 m long and rises 3 m vertically. Which ratio gives the sine of its angle with the ground?",opts:["4/5","3/5","5/3","3/4"],a:1,h:"Sine compares the vertical rise (opposite) with the ramp (hypotenuse).",why:"The ratio is 3/5."}
+],
+[
+{topic:"Algebraic",type:"Routine",q:"Solve: 2(x − 4) = 18.",opts:["x = 5","x = 9","x = 13","x = 17"],a:2,h:"Divide both sides by 2, then add 4.",why:"x − 4 = 9, so x = 13."},
+{topic:"Geometric",type:"Routine",q:"A triangle has base 10 cm and height 6 cm. Find its area.",opts:["16 cm²","30 cm²","60 cm²","120 cm²"],a:1,h:"Triangle area = ½ × base × height.",why:"½ × 10 × 6 = 30 cm²."},
+{topic:"Trigonometric",type:"Routine",q:"If cos θ = adjacent/hypotenuse, what is cos θ when adjacent = 12 and hypotenuse = 13?",opts:["5/13","12/13","13/12","12/5"],a:1,h:"Divide the adjacent side by the hypotenuse.",why:"cos θ = 12/13."},
+{topic:"Algebraic",type:"Non-routine",q:"A number is doubled, then 7 is added. The result is 25. What is the number?",opts:["7","8","9","16"],a:2,h:"Represent the number by n and write 2n + 7 = 25.",why:"2n = 18, so n = 9."},
+{topic:"Geometric",type:"Non-routine",q:"A rectangular garden is 12 m by 8 m. A 1 m-wide path runs inside along all four edges. What is the area left for planting?",opts:["48 m²","60 m²","70 m²","96 m²"],a:0,h:"The planting area loses 1 m from each side, so subtract 2 m from each dimension.",why:"The inner rectangle is 10 m × 6 m = 60 m².",fix:1},
+{topic:"Trigonometric",type:"Non-routine",q:"A kite string is 10 m long and makes a 30° angle with level ground. Which expression gives the kite's height?",opts:["10 cos 30°","10 sin 30°","10 tan 30°","10 ÷ sin 30°"],a:1,h:"The height is opposite the 30° angle; the string is the hypotenuse.",why:"Height = 10 sin 30°."}
+],
+[
+{topic:"Algebraic",type:"Routine",q:"Factor: x² + 7x + 12.",opts:["(x + 2)(x + 6)","(x + 3)(x + 4)","(x − 3)(x − 4)","(x + 1)(x + 12)"],a:1,h:"Find two numbers whose product is 12 and sum is 7.",why:"3 and 4 work, so the factors are (x + 3)(x + 4)."},
+{topic:"Geometric",type:"Routine",q:"Find the circumference of a circle with radius 7 cm. Use π = 22/7.",opts:["22 cm","44 cm","49 cm","154 cm"],a:1,h:"Circumference = 2πr.",why:"2 × 22/7 × 7 = 44 cm."},
+{topic:"Trigonometric",type:"Routine",q:"What is tan θ if opposite = 8 and adjacent = 6?",opts:["3/4","4/3","3/5","5/3"],a:1,h:"Tangent = opposite ÷ adjacent.",why:"8/6 simplifies to 4/3."},
+{topic:"Algebraic",type:"Non-routine",q:"A phone plan costs ₱100 plus ₱5 per day of use. Your bill is ₱160. For how many days was it used?",opts:["10","12","15","20"],a:1,h:"Subtract the fixed ₱100, then divide the remainder by ₱5.",why:"(160 − 100) ÷ 5 = 12 days."},
+{topic:"Geometric",type:"Non-routine",q:"A square tile has side 4 cm. Four tiles are arranged in a straight row. What is the perimeter of the resulting rectangle?",opts:["32 cm","40 cm","64 cm","80 cm"],a:1,h:"The rectangle is 16 cm long and 4 cm wide.",why:"2(16 + 4) = 40 cm."},
+{topic:"Trigonometric",type:"Non-routine",q:"A tree casts a 6 m shadow. The angle of elevation to its top is 45°. How tall is the tree (level ground)?",opts:["3 m","6 m","6√2 m","12 m"],a:1,h:"Use tan 45° = height ÷ shadow. tan 45° = 1.",why:"Height = 6 × 1 = 6 m."}
+],
+[
+{topic:"Algebraic",type:"Routine",q:"Solve the system: x + y = 10 and x − y = 2.",opts:["x=4, y=6","x=6, y=4","x=5, y=5","x=8, y=2"],a:1,h:"Add the equations to eliminate y.",why:"2x = 12, so x = 6 and y = 4."},
+{topic:"Geometric",type:"Routine",q:"A right triangle has legs 9 cm and 12 cm. Find the hypotenuse.",opts:["13 cm","15 cm","18 cm","21 cm"],a:1,h:"Use the Pythagorean theorem: c² = 9² + 12².",why:"c² = 225, so c = 15 cm."},
+{topic:"Trigonometric",type:"Routine",q:"If sin θ = 1/2 and θ is an acute angle, what is θ?",opts:["30°","45°","60°","90°"],a:0,h:"Recall the special-angle sine values.",why:"sin 30° = 1/2."},
+{topic:"Algebraic",type:"Non-routine",q:"The length of a rectangle is 3 cm more than its width. Its perimeter is 30 cm. What is its area?",opts:["45 cm²","50 cm²","54 cm²","60 cm²"],a:2,h:"If width is w, length is w + 3. Use 2(w + w + 3) = 30.",why:"w = 6, length = 9, area = 54 cm²."},
+{topic:"Geometric",type:"Non-routine",q:"A 10 cm by 10 cm square has a 4 cm by 4 cm square cut from one corner. What is the remaining area?",opts:["64 cm²","72 cm²","84 cm²","96 cm²"],a:2,h:"Subtract the small square's area from the large square's area.",why:"100 − 16 = 84 cm²."},
+{topic:"Trigonometric",type:"Non-routine",q:"From a point 20 m from a building, the angle of elevation to the roof is 30°. Which expression represents the building height (ignore eye height)?",opts:["20 sin 30°","20 cos 30°","20 tan 30°","20 ÷ tan 30°"],a:2,h:"Opposite ÷ adjacent = tan θ. The height is opposite; 20 m is adjacent.",why:"Height = 20 tan 30°."}
+],
+[
+{topic:"Algebraic",type:"Routine",q:"Solve: x² − 5x + 6 = 0.",opts:["x = 1 or 6","x = 2 or 3","x = −2 or −3","x = 0 or 5"],a:1,h:"Factor the quadratic into two binomials.",why:"(x − 2)(x − 3) = 0, so x = 2 or 3."},
+{topic:"Geometric",type:"Routine",q:"A cylinder has radius 3 cm and height 5 cm. What is its volume?",opts:["15π cm³","30π cm³","45π cm³","90π cm³"],a:2,h:"Cylinder volume = πr²h.",why:"π × 3² × 5 = 45π cm³."},
+{topic:"Trigonometric",type:"Routine",q:"Which identity is always true?",opts:["sin²θ + cos²θ = 1","sin θ + cos θ = 1","tan θ = sin θ + cos θ","sin θ = cos θ for all θ"],a:0,h:"Recall the Pythagorean trigonometric identity.",why:"The fundamental identity is sin²θ + cos²θ = 1."},
+{topic:"Algebraic",type:"Non-routine",q:"A school club sells adult tickets for ₱80 and student tickets for ₱50. They sell 20 tickets and collect ₱1,300. How many adult tickets were sold?",opts:["8","10","12","15"],a:1,h:"Let a be adult tickets. Then student tickets = 20 − a. Set up 80a + 50(20 − a) = 1300.",why:"30a = 300, so 10 adult tickets were sold."},
+{topic:"Geometric",type:"Non-routine",q:"A circular pond has radius 4 m. A uniform 1 m-wide border is built outside it. What is the area of the border?",opts:["7π m²","9π m²","16π m²","25π m²"],a:1,h:"The outer radius is 5 m. Subtract the pond's area from the outer circle's area.",why:"π(5²) − π(4²) = 9π m²."},
+{topic:"Trigonometric",type:"Non-routine",q:"A 13 m ladder reaches a wall. Its foot is 5 m from the wall. What is the angle the ladder makes with the ground, to the nearest degree?",opts:["23°","53°","67°","75°"],a:1,h:"The adjacent side is 5 and the hypotenuse is 13. Use cos θ = 5/13.",why:"θ = cos⁻¹(5/13) ≈ 67°. Correct answer: 67°.",fix:2}
+]
+];
+// Correct two intentionally rechecked items above through explicit overrides.
+levels[0][4].a=1; levels[0][4].why="The rectangle's width is 7 cm because 2(11 + w) = 36.";
+levels[1][4].a=1; levels[1][4].why="The inner dimensions are 10 m × 6 m, so the planting area is 60 m².";
+levels[3][4].a=2; levels[3][4].why="100 − 16 = 84 cm².";
+levels[4][5].a=2; levels[4][5].why="θ = cos⁻¹(5/13) ≈ 67°.";
+
+const levelNames=["Warm-up","Building Skills","Math Explorer","Problem Solver","Quest Master"];
+let unlocked=Math.max(1,Number(localStorage.getItem("mq_unlocked")||1));
+let soundOn=true,currentLevel=0,index=0,score=0,answered=false;
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));$(id).classList.add("active");window.scrollTo({top:0,behavior:"smooth"});}
+function renderLevels(){
+ $("levelGrid").innerHTML="";
+ levels.forEach((list,i)=>{
+  const open=i<unlocked,card=document.createElement("div");card.className="card level-card";
+  card.innerHTML=`<div style="font-size:1.8rem">${open?"⭐":"🔒"}</div><h3>Level ${i+1}: ${levelNames[i]}</h3><p>6 challenges • Algebraic, geometric & trigonometric</p><p>${open?"Unlocked":"Score 5/6 in the previous level to unlock"}</p><button ${open?"":"disabled"}> ${open?"Play level":"Locked"} </button>`;
+  card.querySelector("button").addEventListener("click",()=>startLevel(i));$("levelGrid").appendChild(card);
+ });
+}
+function startLevel(n){currentLevel=n;index=0;score=0;show("game");$("levelTitle").textContent=`Level ${n+1}: ${levelNames[n]}`;renderQuestion();}
+function renderQuestion(){
+ const q=levels[currentLevel][index];answered=false;
+ $("qProgress").textContent=`${index+1}/6`;$("score").textContent=score;$("progressBar").style.width=`${index/6*100}%`;
+ $("topicTag").textContent=q.topic;$("typeTag").textContent=q.type;$("questionText").textContent=q.q;
+ $("feedback").textContent="Choose the best answer."; $("feedback").className="feedback";
+ $("options").innerHTML="";$("nextBtn").disabled=true;$("nextBtn").textContent=index===5?"See results":"Next →";
+ q.opts.forEach((opt,i)=>{const b=document.createElement("button");b.className="option";b.textContent=String.fromCharCode(65+i)+". "+opt;b.addEventListener("click",()=>choose(i));$("options").appendChild(b);});
+}
+function choose(choice){
+ if(answered)return;answered=true;const q=levels[currentLevel][index];const buttons=[...$("options").children];
+ buttons.forEach((b,i)=>{b.disabled=true;if(i===q.a)b.classList.add("correct");if(i===choice&&choice!==q.a)b.classList.add("wrong");});
+ if(choice===q.a){score++;$("feedback").textContent="✓ Correct! "+q.why;$("feedback").className="feedback good";if(soundOn)beep(660);}
+ else{$("feedback").textContent="Not quite. "+q.why;$("feedback").className="feedback bad";if(soundOn)beep(220);}
+ $("score").textContent=score;$("nextBtn").disabled=false;$("progressBar").style.width=`${(index+1)/6*100}%`;
+}
+function nextQuestion(){if(!answered)return;if(index<5){index++;renderQuestion();}else finishLevel();}
+function finishLevel(){
+ const passed=score>=5,stars=score===6?"⭐⭐⭐":score===5?"⭐⭐":"⭐";
+ if(passed&&currentLevel+1<5){unlocked=Math.max(unlocked,currentLevel+2);localStorage.setItem("mq_unlocked",String(unlocked));}
+ $("resultIcon").textContent=passed?"🏆":"💪";$("resultTitle").textContent=passed?"Level cleared!":"Keep practicing!";
+ $("resultMessage").textContent=passed?"Great work! You reached the 70% passing mark.":"You need at least 5 correct answers to unlock the next level. Review the hints and try again.";
+ $("finalScore").textContent=`${score}/6`;$("stars").textContent=stars;
+ $("nextLevelBtn").style.display=passed&&currentLevel<4?"inline-block":"none";$("nextLevelBtn").textContent=currentLevel===3?"Final level →":"Next level →";
+ if(passed&&currentLevel===4){$("resultMessage").textContent="Amazing! You completed all five MathQuest levels.";$("nextLevelBtn").style.display="none";}
+ show("result");renderLevels();
+}
+function openModal(id){$(id).classList.add("open");}
+function closeModal(id){$(id).classList.remove("open");}
+function beep(freq){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.frequency.value=freq;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(.07,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.14);o.start();o.stop(c.currentTime+.14);o.onended=()=>c.close();}catch(e){}}
+$("exitBtn").onclick=()=>{show("menu");renderLevels();};$("menuBtn").onclick=()=>{show("menu");renderLevels();};
+$("nextBtn").onclick=nextQuestion;$("nextLevelBtn").onclick=()=>startLevel(currentLevel+1);
+$("hintBtn").onclick=()=>{$("hintText").textContent=levels[currentLevel][index].h;openModal("hintModal");};
+$("closeHint").onclick=()=>closeModal("hintModal");
+$("scratchBtn").onclick=()=>openModal("scratchModal");$("closeScratch").onclick=()=>closeModal("scratchModal");
+$("clearScratch").onclick=()=>{$("scratchText").value="";};
+$("soundBtn").onclick=()=>{soundOn=!soundOn;$("soundBtn").textContent=soundOn?"🔊 Sound on":"🔇 Sound off";};
+$("shareBtn").onclick=()=>{const url=location.href;$("shareUrl").value=url;$("qr").innerHTML="";if(url.startsWith("http")&&window.QRCode){new QRCode($("qr"),{text:url,width:150,height:150});}else{$("qr").textContent="QR code will appear after the game is published online.";}$("qr").style.color="#111827";openModal("shareModal");};
+$("closeShare").onclick=()=>closeModal("shareModal");
+$("copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText($("shareUrl").value);$("copyBtn").textContent="Copied!";setTimeout(()=>$("copyBtn").textContent="Copy",1500);}catch(e){$("shareUrl").select();document.execCommand("copy");$("copyBtn").textContent="Copied!";}};
+["hintModal","scratchModal","shareModal"].forEach(id=>$(id).addEventListener("click",e=>{if(e.target===$(id))closeModal(id);}));
+renderLevels();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+</body></html>
